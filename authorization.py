@@ -3,12 +3,17 @@ import pyodbc
 from PyQt5.QtWidgets import QWidget, QApplication, QSystemTrayIcon, QStyle, QAction, qApp, QMenu, QDialog, QLabel, QPushButton, QVBoxLayout, QMessageBox
 from authorizationui import Ui_Dialog
 from PyQt5.QtCore import QRect
-from main import window
+from admin.main import window as windowadmin
+from editor.main import window as windoweditor
+from common.main import window as windowcommon
 from register import Dialog
 class LoginDatabase():
     def __init__(self, dbname):
         self.dbname = dbname
-        self.conn = pyodbc.connect(DRIVER='{ODBC Driver 17 for SQL Server}',SERVER='DESKTOP-775NG2O\MSSQLSERVER01',DATABASE=dbname,trusted_connection='yes')
+        self.conn = pyodbc.connect(DRIVER='{ODBC Driver 17 for SQL Server}',
+        SERVER='DESKTOP-775NG2O\MSSQLSERVER01',
+        DATABASE=dbname,
+        trusted_connection='yes')#Подключение к БД
 
     def is_table(self, table_name):
         query = "SELECT name from {table_name}".format(table_name=table_name)
@@ -48,8 +53,18 @@ class MainDialog(QDialog, Ui_Dialog):
         msgBox.exec_()
 
     def welcomeWindowShow(self):
-        self.ui.welcomeWindow = window()
-        self.ui.welcomeWindow.show()
+        data=self.loginDatabase.conn.execute("select rights from users where name = (?)",(self.ui.uname_lineEdit.text())).fetchall()
+        data=[elem[0] for elem in data]
+        print(data)
+        if(int(data[0])==2):
+            self.ui.welcomeWindow = windowadmin(self.ui.uname_lineEdit.text())
+            self.ui.welcomeWindow.show()
+        if(int(data[0])==1):
+            self.ui.welcomeWindow = windoweditor(self.ui.uname_lineEdit.text())
+            self.ui.welcomeWindow.show()
+        if(int(data[0])==0):
+            self.ui.welcomeWindow = windowcommon(self.ui.uname_lineEdit.text())
+            self.ui.welcomeWindow.show()
 
     def signUpShow(self):
         self.signUpWindow = Dialog(self)
